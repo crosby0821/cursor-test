@@ -1,8 +1,6 @@
 import { getTile, isOwnableTile } from '../data/board'
 import { initDecks } from './cards'
-import { countPlayerBuildings } from './cards'
 import {
-  BOARD_SIZE,
   EXPOSURE_BUILD_COST,
   EXPOSURE_SELL_RETURN,
   JAIL_FINE,
@@ -32,6 +30,14 @@ import type {
   Player,
 } from './types'
 import { drawCard } from './cards'
+import {
+  calcAssessmentCost,
+  calcCollectAmount,
+  calcPayAmount,
+  calcPayEachPlayerTotal,
+  calcRepairsCost,
+  calcGoBackPosition,
+} from './cardEffects'
 
 function appendLog(state: GameState, entry: string): string[] {
   return [entry, ...state.log].slice(0, 5)
@@ -211,24 +217,24 @@ function applyCardEffect(state: GameState): GameState {
   switch (card.effect) {
     case 'collect': {
       s = updatePlayer(s, playerId, {
-        capital: player.capital + (card.amount ?? 0),
+        capital: player.capital + calcCollectAmount(card),
       })
       break
     }
     case 'pay': {
-      const amt = card.amount ?? 0
+      const amt = calcPayAmount(card)
       if (player.capital < amt) return { ...s, phase: 'insolvency' }
       s = updatePlayer(s, playerId, { capital: player.capital - amt })
       break
     }
     case 'payEachPlayer': {
-      const amt = card.amount ?? 0
       const others = s.players.filter((p) => p.solvent && p.id !== playerId)
-      const total = amt * others.length
+      const total = calcPayEachPlayerTotal(card, others.length)
       if (player.capital < total) return { ...s, phase: 'insolvency' }
       s = updatePlayer(s, playerId, { capital: player.capital - total })
+      const eachPay = calcPayAmount(card)
       for (const o of others) {
-        s = updatePlayer(s, o.id, { capital: o.capital + amt })
+        s = updatePlayer(s, o.id, { capital: o.capital + eachPay })
       }
       break
     }
@@ -282,7 +288,7 @@ function applyCardEffect(state: GameState): GameState {
       return resolveLanding(s, playerId)
     }
     case 'goBack': {
-      const pos = (player.position - (card.spaces ?? 3) + BOARD_SIZE) % BOARD_SIZE
+      const pos = calcGoBackPosition(player.position, card.spaces ?? 3)
       s = updatePlayer(s, playerId, { position: pos })
       return resolveLanding(s, playerId)
     }
@@ -292,16 +298,13 @@ function applyCardEffect(state: GameState): GameState {
       s = updatePlayer(s, playerId, { jailFreeCards: player.jailFreeCards + 1 })
       break
     case 'repairs': {
-      const { tiers } = countPlayerBuildings(s, playerId)
-      const cost = tiers * (card.amount ?? 50)
+      const cost = calcRepairsCost(s, playerId, card.amount ?? 50)
       if (player.capital < cost) return { ...s, phase: 'insolvency' }
       s = updatePlayer(s, playerId, { capital: player.capital - cost })
       break
     }
     case 'assessment': {
-      const { tiers, hotels, lines } = countPlayerBuildings(s, playerId)
-      const perTier = card.amount ?? 25
-      const cost = lines * perTier + tiers * perTier + hotels * (perTier * 4)
+      const cost = calcAssessmentCost(s, playerId, card.amount ?? 25)
       if (player.capital < cost) return { ...s, phase: 'insolvency' }
       s = updatePlayer(s, playerId, { capital: player.capital - cost })
       break

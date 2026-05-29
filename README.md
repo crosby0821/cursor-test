@@ -58,3 +58,13 @@ npm run preview  # preview production build
 ## License
 
 MIT — fan/educational project; not affiliated with Hasbro or Monopoly™.
+
+
+## Manual verification (pass-and-play)
+
+1. Start a **2-player** game in the lobby.
+2. Player 1 rolls and **underwrites** a full brown segment (Micro-Insurance + Term Life Standard).
+3. Player 1 **builds exposure** (+$50) on one line after owning the segment.
+4. Player 2 rolls until they land on Player 1's line and **pays claims**.
+5. Either player lands on **Stochastic events** or **Industry events** and resolves a card.
+6. Confirm **Premium Collection Day** pays $200 (+$10 per fully controlled segment when passing Go).
