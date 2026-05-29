@@ -35,4 +35,17 @@ describe('gameReducer', () => {
     expect(s.lastDice?.total).toBeGreaterThan(0)
     expect(s.players[0].position).not.toBe(startPos)
   })
+
+  it('sends player to regulatory examination on third double', () => {
+    let s = gameReducer(createInitialState(), {
+      type: 'START_GAME',
+      playerNames: ['A', 'B'],
+    })
+    s = { ...s, consecutiveDoubles: 2, phase: 'preRoll' }
+    const random = vi.spyOn(Math, 'random').mockReturnValue(0)
+    s = gameReducer(s, { type: 'ROLL_DICE' })
+    random.mockRestore()
+    expect(s.players[0].inJail).toBe(true)
+    expect(s.players[0].position).toBe(10)
+  })
 })
