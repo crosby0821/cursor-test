@@ -34,7 +34,7 @@ import type {
 import { drawCard } from './cards'
 
 function appendLog(state: GameState, entry: string): string[] {
-  return [entry, ...state.log].slice(0, 8)
+  return [entry, ...state.log].slice(0, 5)
 }
 
 function currentPlayer(state: GameState): Player {
