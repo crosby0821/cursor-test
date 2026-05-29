@@ -2,7 +2,17 @@
 
 A browser-based, actuarially themed board game inspired by classic property games. Underwrite lines of business, collect premium income, pay claims, build exposure tiers, and survive stochastic industry events — all in local pass-and-play mode.
 
-## Quick start
+## Play online (no install)
+
+Once the game is on the **`main`** branch and GitHub Pages is enabled, open this URL in any modern browser:
+
+**https://crosby0821.github.io/cursor-test/**
+
+No Node.js or npm required — just share one device and take turns.
+
+For full instructions (hosted play, offline `dist/` folder, troubleshooting), see **[PLAY.md](PLAY.md)**.
+
+## Quick start (developers)
 
 ```bash
 npm install
