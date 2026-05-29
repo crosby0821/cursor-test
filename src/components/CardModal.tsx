@@ -1,7 +1,8 @@
-import { useGame } from '../context/GameContext'
+import { useGame, useGameDispatch } from '../context/GameContext'
 
 export function CardModal() {
   const { state } = useGame()
+  const dispatch = useGameDispatch()
   if (state.phase !== 'cardReveal' || !state.pendingCard) return null
 
   return (
@@ -13,9 +14,13 @@ export function CardModal() {
             : 'Industry event'}
         </h3>
         <p>{state.pendingCard.card.text}</p>
-        <p style={{ fontSize: '0.85rem', color: 'var(--muted)' }}>
-          Click &quot;Resolve card&quot; in the panel when ready.
-        </p>
+        <button
+          className="btn btn-primary"
+          style={{ marginTop: '1rem' }}
+          onClick={() => dispatch({ type: 'RESOLVE_CARD' })}
+        >
+          Resolve card
+        </button>
       </div>
     </div>
   )

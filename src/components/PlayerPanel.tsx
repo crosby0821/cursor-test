@@ -1,20 +1,29 @@
 import { BOARD_TILES } from '../data/board'
 import { calcMcrHint } from '../game/property'
 import { canBuildExposure } from '../game/property'
+import { canManageAssets, canRoll, isActiveTurn } from '../game/turn'
 import { useGame, useGameDispatch } from '../context/GameContext'
 import { getTile } from '../data/board'
+
+function requiredPayment(state: ReturnType<typeof useGame>['state']): number | null {
+  if (state.pendingRent) return state.pendingRent.amount
+  if (state.pendingBuy) return state.pendingBuy.price
+  if (state.pendingObligation != null) return state.pendingObligation
+  return null
+}
 
 export function PlayerPanel() {
   const { state } = useGame()
   const dispatch = useGameDispatch()
   const current = state.players[state.currentPlayerIndex]
-  const isMyTurn = state.phase !== 'gameOver'
+  const activeTurn = isActiveTurn(state)
+  const canManage = canManageAssets(state)
+  const owed = requiredPayment(state)
 
   const ownedTiles = BOARD_TILES.filter((t) => {
     const ps = state.properties[t.id]
     return ps?.ownerId === current?.id
   })
-
 
   return (
     <div className="panel">
@@ -27,6 +36,11 @@ export function PlayerPanel() {
               style={{ background: current.color }}
             />
             <strong>{current.name}</strong>
+            {activeTurn && state.phase !== 'gameOver' && (
+              <span style={{ marginLeft: '0.5rem', color: 'var(--accent2)' }}>
+                (your turn)
+              </span>
+            )}
           </div>
           <div className="stat">
             <span>Capital:</span> ${current.capital}
@@ -46,20 +60,26 @@ export function PlayerPanel() {
         </>
       )}
 
+      {activeTurn && state.phase !== 'gameOver' && current && (
+        <div className="handoff-cue">
+          Pass device to <strong>{current.name}</strong>
+        </div>
+      )}
+
       <div className="message-box">{state.message}</div>
 
       <div className="actions">
-        {isMyTurn && state.phase === 'preRoll' && !current?.inJail && (
+        {activeTurn && canRoll(state.phase) && !current?.inJail && (
           <button className="btn btn-primary" onClick={() => dispatch({ type: 'ROLL_DICE' })}>
             Roll dice
           </button>
         )}
-        {isMyTurn && current?.inJail && state.phase === 'preRoll' && (
+        {activeTurn && current?.inJail && canRoll(state.phase) && (
           <button className="btn btn-primary" onClick={() => dispatch({ type: 'ROLL_DICE' })}>
             Roll for doubles
           </button>
         )}
-        {state.phase === 'buyPrompt' && state.pendingBuy && (
+        {activeTurn && state.phase === 'buyPrompt' && state.pendingBuy && (
           <>
             <button
               className="btn btn-primary"
@@ -75,7 +95,7 @@ export function PlayerPanel() {
             </button>
           </>
         )}
-        {state.phase === 'payRent' && (
+        {activeTurn && state.phase === 'payRent' && (
           <button
             className="btn btn-primary"
             onClick={() => dispatch({ type: 'PAY_RENT' })}
@@ -83,7 +103,7 @@ export function PlayerPanel() {
             Pay claims (${state.pendingRent?.amount})
           </button>
         )}
-        {state.phase === 'cardReveal' && (
+        {activeTurn && state.phase === 'cardReveal' && (
           <button
             className="btn btn-primary"
             onClick={() => dispatch({ type: 'RESOLVE_CARD' })}
@@ -91,14 +111,21 @@ export function PlayerPanel() {
             Resolve card
           </button>
         )}
-        {state.phase === 'insolvency' && (
+        {activeTurn && state.phase === 'insolvency' && (
           <>
-            <button
-              className="btn btn-secondary"
-              onClick={() => dispatch({ type: 'RAISE_CAPITAL_DONE' })}
-            >
-              Try pay again
-            </button>
+            {owed != null && (
+              <div className="stat" style={{ color: '#f59e0b' }}>
+                Required: ${owed}
+              </div>
+            )}
+            {!current?.restructureUsed && (
+              <button
+                className="btn btn-secondary"
+                onClick={() => dispatch({ type: 'RAISE_CAPITAL_DONE' })}
+              >
+                Try pay again
+              </button>
+            )}
             <button
               className="btn btn-danger"
               onClick={() => dispatch({ type: 'DECLARE_INSOLVENT' })}
@@ -107,7 +134,7 @@ export function PlayerPanel() {
             </button>
           </>
         )}
-        {current?.inJail && state.phase === 'preRoll' && (
+        {activeTurn && current?.inJail && canRoll(state.phase) && (
           <>
             <button
               className="btn btn-secondary"
@@ -125,7 +152,8 @@ export function PlayerPanel() {
             )}
           </>
         )}
-        {(state.phase === 'preRoll' || state.phase === 'buyPrompt') &&
+        {activeTurn &&
+          (state.phase === 'preRoll' || state.phase === 'buyPrompt') &&
           state.lastDice &&
           !state.lastDice.isDoubles && (
             <button
@@ -144,6 +172,7 @@ export function PlayerPanel() {
             {ownedTiles.map((t) => {
               const ps = state.properties[t.id]!
               const canBuild =
+                canManage &&
                 t.kind === 'property' &&
                 canBuildExposure(state, current.id, t.id)
               return (
@@ -151,72 +180,74 @@ export function PlayerPanel() {
                   {t.name}
                   {ps.exposureTier > 0 && ` (T${ps.exposureTier})`}
                   {ps.mortgaged && ' [ceded]'}
-                  <div className="actions">
-                    {canBuild && (
-                      <button
-                        className="btn btn-secondary"
-                        style={{ fontSize: '0.7rem', padding: '0.2rem 0.4rem' }}
-                        onClick={() =>
-                          dispatch({
-                            type: 'BUILD_EXPOSURE',
-                            tileId: t.id,
-                          })
-                        }
-                      >
-                        +Exposure $50
-                      </button>
-                    )}
-                    {ps.exposureTier > 0 && (
-                      <button
-                        className="btn btn-secondary"
-                        style={{ fontSize: '0.7rem', padding: '0.2rem 0.4rem' }}
-                        onClick={() =>
-                          dispatch({
-                            type: 'SELL_EXPOSURE',
-                            tileId: t.id,
-                          })
-                        }
-                      >
-                        Sell tier
-                      </button>
-                    )}
-                    {!ps.mortgaged && ps.exposureTier === 0 && (
-                      <button
-                        className="btn btn-secondary"
-                        style={{ fontSize: '0.7rem', padding: '0.2rem 0.4rem' }}
-                        onClick={() =>
-                          dispatch({ type: 'MORTGAGE', tileId: t.id })
-                        }
-                      >
-                        Cede
-                      </button>
-                    )}
-                    {ps.mortgaged && (
-                      <button
-                        className="btn btn-secondary"
-                        style={{ fontSize: '0.7rem', padding: '0.2rem 0.4rem' }}
-                        onClick={() =>
-                          dispatch({ type: 'UNMORTGAGE', tileId: t.id })
-                        }
-                      >
-                        Recover
-                      </button>
-                    )}
-                    {state.phase === 'insolvency' && (
-                      <button
-                        className="btn btn-danger"
-                        style={{ fontSize: '0.7rem', padding: '0.2rem 0.4rem' }}
-                        onClick={() =>
-                          dispatch({
-                            type: 'SELL_ASSETS_TO_BANK',
-                            tileId: t.id,
-                          })
-                        }
-                      >
-                        Liquidate
-                      </button>
-                    )}
-                  </div>
+                  {canManage && (
+                    <div className="actions">
+                      {canBuild && (
+                        <button
+                          className="btn btn-secondary"
+                          style={{ fontSize: '0.7rem', padding: '0.2rem 0.4rem' }}
+                          onClick={() =>
+                            dispatch({
+                              type: 'BUILD_EXPOSURE',
+                              tileId: t.id,
+                            })
+                          }
+                        >
+                          +Exposure $50
+                        </button>
+                      )}
+                      {ps.exposureTier > 0 && (
+                        <button
+                          className="btn btn-secondary"
+                          style={{ fontSize: '0.7rem', padding: '0.2rem 0.4rem' }}
+                          onClick={() =>
+                            dispatch({
+                              type: 'SELL_EXPOSURE',
+                              tileId: t.id,
+                            })
+                          }
+                        >
+                          Sell tier
+                        </button>
+                      )}
+                      {!ps.mortgaged && ps.exposureTier === 0 && (
+                        <button
+                          className="btn btn-secondary"
+                          style={{ fontSize: '0.7rem', padding: '0.2rem 0.4rem' }}
+                          onClick={() =>
+                            dispatch({ type: 'MORTGAGE', tileId: t.id })
+                          }
+                        >
+                          Cede
+                        </button>
+                      )}
+                      {ps.mortgaged && (
+                        <button
+                          className="btn btn-secondary"
+                          style={{ fontSize: '0.7rem', padding: '0.2rem 0.4rem' }}
+                          onClick={() =>
+                            dispatch({ type: 'UNMORTGAGE', tileId: t.id })
+                          }
+                        >
+                          Recover
+                        </button>
+                      )}
+                      {state.phase === 'insolvency' && activeTurn && (
+                        <button
+                          className="btn btn-danger"
+                          style={{ fontSize: '0.7rem', padding: '0.2rem 0.4rem' }}
+                          onClick={() =>
+                            dispatch({
+                              type: 'SELL_ASSETS_TO_BANK',
+                              tileId: t.id,
+                            })
+                          }
+                        >
+                          Liquidate
+                        </button>
+                      )}
+                    </div>
+                  )}
                 </li>
               )
             })}

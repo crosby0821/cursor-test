@@ -144,14 +144,17 @@ export interface GameState {
   pendingRent: { amount: number; toPlayerId: string; tileId: number; description: string } | null
   pendingBuy: { tileId: number; price: number } | null
   pendingCard: PendingCard | null
+  pendingObligation: number | null
   freeParkingPool: number
+  freeParkingPayout: boolean
   log: string[]
   winnerId: string | null
   message: string
 }
 
 export type GameAction =
-  | { type: 'START_GAME'; playerNames: string[] }
+  | { type: 'START_GAME'; playerNames: string[]; freeParkingPayout?: boolean }
+  | { type: 'RESET_GAME' }
   | { type: 'ROLL_DICE' }
   | { type: 'BUY_PROPERTY' }
   | { type: 'DECLINE_BUY' }

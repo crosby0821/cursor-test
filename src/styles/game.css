@@ -310,3 +310,41 @@ body {
   height: 10px;
   border-radius: 50%;
 }
+
+.handoff-cue {
+  background: rgba(45, 212, 191, 0.12);
+  border: 1px solid var(--accent2);
+  border-radius: 8px;
+  padding: 0.5rem 0.75rem;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+
+.game-over-stats {
+  margin-top: 0.75rem;
+  text-align: left;
+}
+
+.checkbox-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  margin-top: 1rem;
+  font-size: 0.85rem;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.checkbox-row input {
+  margin-top: 0.15rem;
+}
+
+@media (max-width: 600px) {
+  .tile-name {
+    font-size: 0.55rem;
+  }
+
+  .tile-price {
+    font-size: 0.5rem;
+  }
+}

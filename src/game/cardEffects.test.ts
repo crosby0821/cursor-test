@@ -7,6 +7,7 @@ import {
   calcPayEachPlayerTotal,
   canAfford,
 } from './cardEffects'
+import { applyCardEffect } from './applyCardEffect'
 import { gameReducer } from './reducer'
 import { createInitialState } from './initialState'
 
@@ -31,6 +32,31 @@ describe('cardEffects', () => {
   it('canAfford checks capital', () => {
     expect(canAfford(100, 50)).toBe(true)
     expect(canAfford(10, 50)).toBe(false)
+  })
+
+  it('applyCardEffect collects surplus on collect effect', () => {
+    let s = gameReducer(createInitialState(), {
+      type: 'START_GAME',
+      playerNames: ['A', 'B'],
+    })
+    const before = s.players[0].capital
+    s = {
+      ...s,
+      phase: 'cardReveal',
+      pendingCard: {
+        playerId: 'p0',
+        card: {
+          id: 'x',
+          instanceId: 'x-0',
+          deck: 'chance',
+          text: 'Test collect',
+          effect: 'collect',
+          amount: 50,
+        },
+      },
+    }
+    s = applyCardEffect(s)
+    expect(s.players[0].capital).toBe(before + 50)
   })
 })
 

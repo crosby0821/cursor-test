@@ -48,4 +48,15 @@ describe('gameReducer', () => {
     expect(s.players[0].inJail).toBe(true)
     expect(s.players[0].position).toBe(10)
   })
+
+  it('RESET_GAME returns to lobby state', () => {
+    let s = gameReducer(createInitialState(), {
+      type: 'START_GAME',
+      playerNames: ['A', 'B'],
+    })
+    expect(s.started).toBe(true)
+    s = gameReducer(s, { type: 'RESET_GAME' })
+    expect(s.started).toBe(false)
+    expect(s.players).toHaveLength(0)
+  })
 })

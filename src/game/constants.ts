@@ -10,6 +10,7 @@ export const UNMORTGAGE_MULTIPLIER = 1.1
 export const BOARD_SIZE = 40
 export const JAIL_POSITION = 10
 export const GO_POSITION = 0
+export const LOG_MAX_ENTRIES = 20
 
 export const PLAYER_COLORS = ['#3d8bfd', '#2dd4bf', '#f59e0b', '#ef4444']
 
