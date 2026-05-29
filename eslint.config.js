@@ -19,4 +19,13 @@ export default defineConfig([
       globals: globals.browser,
     },
   },
+  {
+    files: ['src/context/GameContext.tsx', 'src/components/BoardTile.tsx'],
+    rules: {
+      'react-refresh/only-export-components': [
+        'error',
+        { allowExportNames: ['useGame', 'useGameDispatch', 'getTileGridStyle'] },
+      ],
+    },
+  },
 ])

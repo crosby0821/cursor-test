@@ -5,11 +5,13 @@ export function Lobby() {
   const dispatch = useGameDispatch()
   const [count, setCount] = useState(2)
   const [names, setNames] = useState(['Actuary 1', 'Actuary 2', 'Actuary 3', 'Actuary 4'])
+  const [freeParkingPayout, setFreeParkingPayout] = useState(true)
 
   const start = () => {
     dispatch({
       type: 'START_GAME',
       playerNames: names.slice(0, count),
+      freeParkingPayout,
     })
   }
 
@@ -44,6 +46,14 @@ export function Lobby() {
           />
         </div>
       ))}
+      <label className="checkbox-row">
+        <input
+          type="checkbox"
+          checked={freeParkingPayout}
+          onChange={(e) => setFreeParkingPayout(e.target.checked)}
+        />
+        Reserve Release Pool payout (taxes collected go to landing player)
+      </label>
       <button
         className="btn btn-primary"
         style={{ marginTop: '1.5rem', width: '100%' }}
