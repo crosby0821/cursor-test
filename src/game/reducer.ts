@@ -403,7 +403,11 @@ export function gameReducer(
       else doubles = 0
 
       if (doubles >= 3) {
-        return endTurnIfNeeded(sendToJail(state, player.id), false)
+        const jailed = sendToJail(
+          { ...state, lastDice: dice, consecutiveDoubles: 0 },
+          player.id
+        )
+        return endTurnIfNeeded(jailed, false)
       }
 
       const move = movePlayer(player, dice.total, state)

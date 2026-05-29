@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import { createInitialState } from './initialState'
 import { gameReducer } from './reducer'
 
@@ -22,13 +22,17 @@ describe('gameReducer', () => {
   })
 
   it('rolls and moves current player', () => {
+    const random = vi.spyOn(Math, 'random')
+    random.mockReturnValueOnce(0.2).mockReturnValueOnce(0.7)
     let s = gameReducer(createInitialState(), {
       type: 'START_GAME',
       playerNames: ['A', 'B'],
     })
     const startPos = s.players[0].position
     s = gameReducer(s, { type: 'ROLL_DICE' })
+    random.mockRestore()
     expect(s.lastDice).not.toBeNull()
+    expect(s.lastDice?.isDoubles).toBe(false)
     expect(s.players[0].position).not.toBe(startPos)
   })
 })
